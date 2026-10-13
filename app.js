@@ -6,6 +6,7 @@ const mqtt = require('mqtt');
 const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
+const HomeyPush = require('./lib/push');
 
 const API_BASE = 'https://api-eu-iot.lepro.com';
 const APP_VERSION = '1.0.9.263';
@@ -32,6 +33,8 @@ module.exports = class LeproApp extends Homey.App {
 
   async onInit() {
     this.log('Lepro app initializing');
+    this.push = new HomeyPush(this);
+    await this.push.startPush();
 
     /** @type {mqtt.MqttClient|null} */
     this.mqttClient = null;
@@ -263,6 +266,12 @@ module.exports = class LeproApp extends Homey.App {
     };
     const topic = `le/${deviceId}/prp/get`;
     this.mqttClient.publish(topic, JSON.stringify(envelope), { qos: 0 });
+  }
+
+  async onUninit() {
+    if (this.push) {
+      this.push.stopPush();
+    }
   }
 
 };
